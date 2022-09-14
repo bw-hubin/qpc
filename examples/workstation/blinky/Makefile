@@ -219,7 +219,7 @@ CPPFLAGS = -c -g -O -fno-pie -std=c++11 -pedantic -Wall -Wextra \
 endif  # .....................................................................
 
 ifndef GCC_OLD
-	LINKFLAGS := -no-pie
+	LINKFLAGS :=
 endif
 
 #-----------------------------------------------------------------------------
