@@ -1,0 +1,89 @@
+/**
+ * comm.proto
+ * MCU-BLE间的统一数据交互协议，基于nano protobuf定义
+ *
+ *
+ *
+ * 编译指令：
+ * ..\nanopb\generator-bin\protoc --nanopb_out=. comm.proto
+
+ * [修改记录]
+ * 1. hubin 新增蓝牙通讯协议
+ */
+
+
+syntax = "proto2";
+
+/* 命令发送者类型 */
+enum eSRCType {
+    TSP  = 0; /* TSP平台下发指令 */
+    APP  = 1; /* 手机APP通过BLE下发指令 */
+    FOTA = 2; /* FOTA平台下发指令 */
+}
+
+/* 消息类型 */
+enum eMSGType {
+    CMD = 1; /* 命令包 */
+    ACK = 2; /* 应答包 */
+}
+
+/* 当前系统时刻 */
+message TICK {
+    required uint32 year  = 1; /* 年 */
+    required uint32 month = 2; /* 月 */
+    required uint32 day   = 3; /* 日 */
+    required uint32 hour  = 4; /* 时 */
+    required uint32 min   = 5; /* 分 */
+    required uint32 sec   = 6; /* 秒 */
+    required uint32 msec  = 7; /* 毫秒 */
+}
+
+/* 蓝牙：定义peps 位置 */
+enum eVK_PEPS_STATUS {
+    DISCONNECTED = 0; /* 蓝牙处于无效状态 */
+    PE           = 1; /* 表示车外附近 PE */
+    PS           = 2; /* 车内 PS */
+    PEPS         = 3; /* 混合区 PEPS */
+    FAR_DOOR     = 4; /* 车外远离 */
+    UNKNOW       = 5; /* 手机安全连接，但是不处于有效peps位置 */
+}
+
+/* 蓝牙：指令命令字 */
+enum eVK_PROTOCOL_CMD {
+    UPGRADE_NOTIFY      = 0x04;  /* 更新通知 */
+    UPGRADE_DATA_TRANS  = 0x03;  /* 更新数据传输 */
+    PRODUCTION_DATA     = 0x05;  /* 获取产线数据 */
+    PRINT_LOG           = 0x06;  /* 打印日志 */
+    VEHICLE_CONTROL     = 0x08;  /* 控车指令 */
+}
+
+/* 蓝牙：应答命令字 */
+enum eVK_PROTOCOL_RES {
+    UPGRADE_NOTIFY_RES          = 0x84;  /* 更新通知应答 */
+    UPGRADE_DATA_TRANS_RES      = 0x83;  /* 更新数据传输应答 */
+    PRODUCTION_DATA_RES         = 0x85;  /* 获取产线数据应答 */
+    VEHICLE_CONTROL_RES         = 0x88;  /* 控车指令应答 */
+}
+
+/* 蓝牙：车控指令定义 */
+enum eVK_CAR_CONTROL_CMD {
+    INACTIVE            = 0;  /* Inactive */
+    VEHICLE_LOCKING     = 1;  /* 闭锁 */
+    VEHICLE_UNLOCKING   = 2;  /* 开锁 */
+    VEHICLE_SEARCH      = 3;  /* 寻车 */
+    WINDOW_OPEN         = 4;  /* 开窗 */
+    WINDOW_CLOSE        = 5;  /* 关窗 */
+    REMOTE_CONTROL      = 6;  /* 遥控控车 */
+    VEHICLE_CALL        = 7;  /* 开始召唤 */
+    FORWARD             = 8;  /* 前进 */
+    BACKWARD            = 9;  /* 后退 */
+    TRUN_LEFT           = 10; /* 左转 */
+    TRUN_RIGHT          = 11; /* 右转 */
+    EXIT_REMOTE_CONTROL = 12; /* 退出遥控控车 */
+    EXIT_UNLOCKING      = 13; /* 退出闭锁 */
+    PARKING_IN          = 14; /* 开始泊入 */
+    PARKING_OUT         = 15; /* 开始泊出 */
+    PARKING_PAUSE       = 16; /* 暂停泊车 */
+    PARKING_CONTINUE    = 17; /* 继续泊车 */
+    CAR_DISCONNECT      = 18;
+}

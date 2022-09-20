@@ -1,0 +1,29 @@
+# This file defines the nanopb-specific options for the messages defined
+# in fileproto.proto.
+#
+# If you come from high-level programming background, the hardcoded
+# maximum lengths may disgust you. However, if your microcontroller only
+# has a few kB of ram to begin with, setting reasonable limits for
+# filenames is ok.
+#
+# On the other hand, using the callback interface, it is not necessary
+# to set a limit on the number of files in the response.
+
+DATA_CmdParam.data          max_size:512
+DATA_Block.data             max_size:256
+CAN_FRAME.data              max_size:8
+DATA_CANData.data           max_size:900
+
+DATA_FileInfo.file_name     max_size:50
+DATA_FileInfo.version_hw    max_size:20
+DATA_FileInfo.version_sw    max_size:50
+
+DATA_MCUInfo.version        max_size:20
+DATA_MCUInfo.sn             max_size:20
+DATA_ModemInfo.iccid        max_size:30
+DATA_ModemInfo.version      max_size:20
+DATA_RealInfo.data          max_size:1200
+
+DATA_VehLogin.vin                       max_size:18
+DATA_VehLogin.tin                       max_size:10
+DATA_VehLogin.batteryPackCodes          max_size:1000

@@ -126,7 +126,8 @@ C_SRCS += \
 	qf_qeq.c \
 	qf_qmact.c \
 	qf_time.c \
-	qf_port.c
+	qf_port.c \
+	blinky.c
 
 QS_SRCS := \
 	qs.c \
@@ -142,7 +143,7 @@ endif
 #============================================================================
 # Typically you should not need to change anything below this line
 
-VPATH    += $(QPC)/src/qf $(QP_PORT_DIR)
+VPATH    += $(QPC)/src/qf $(QP_PORT_DIR) model
 INCLUDES += -I$(QPC)/include -I$(QP_PORT_DIR)
 
 #-----------------------------------------------------------------------------

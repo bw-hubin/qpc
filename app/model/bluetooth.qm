@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="5.1.4" links="1">
+ <documentation>Blinky example</documentation>
+ <!--${qpc}-->
+ <framework name="qpc"/>
+ <!--${AOs}-->
+ <package name="AOs" stereotype="0x02">
+  <!--${AOs::Blinky}-->
+  <class name="Blinky" superclass="qpc::QActive">
+   <!--${AOs::Blinky::inst}-->
+   <attribute name="inst" type="Blinky" visibility="0x00" properties="0x01"/>
+   <!--${AOs::Blinky::timeEvt}-->
+   <attribute name="timeEvt" type="QTimeEvt" visibility="0x02" properties="0x00"/>
+   <!--${AOs::Blinky::SM}-->
+   <statechart properties="0x03">
+    <documentation>Blinky state machine</documentation>
+    <!--${AOs::Blinky::SM::initial}-->
+    <initial target="../1">
+     <action>(void)par; /* unused parameter */
+QTimeEvt_armX(&amp;me-&gt;timeEvt,
+BSP_TICKS_PER_SEC/2, BSP_TICKS_PER_SEC/2);</action>
+     <initial_glyph conn="2,3,5,1,20,4,-4">
+      <action box="0,-2,6,2"/>
+     </initial_glyph>
+    </initial>
+    <!--${AOs::Blinky::SM::off}-->
+    <state name="off">
+     <entry>BSP_ledOff();</entry>
+     <!--${AOs::Blinky::SM::off::TIMEOUT}-->
+     <tran trig="TIMEOUT" target="../../2">
+      <tran_glyph conn="2,13,3,1,18,6,-2">
+       <action box="0,-2,8,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="2,5,16,10">
+      <entry box="1,2,12,4"/>
+     </state_glyph>
+    </state>
+    <!--${AOs::Blinky::SM::on}-->
+    <state name="on">
+     <entry>BSP_ledOn();</entry>
+     <!--${AOs::Blinky::SM::on::TIMEOUT}-->
+     <tran trig="TIMEOUT" target="../../1">
+      <tran_glyph conn="2,25,3,1,20,-15,-4">
+       <action box="0,-2,8,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="2,17,16,10">
+      <entry box="1,2,12,4"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="24,29"/>
+   </statechart>
+  </class>
+  <!--${AOs::Blinky_ctor}-->
+  <operation name="Blinky_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>Blinky *me = &amp;l_Blinky;
+QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;Blinky_initial));
+QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
+  </operation>
+ </package>
+ <!--${.}-->
+ <directory name=".">
+  <!--${.::bluetooth.h}-->
+  <file name="bluetooth.h">
+   <text>#ifndef BLUETOOTH_h
+#define BLUETOOTH_h
+
+#include &quot;qpc.h&quot;
+
+enum BTSignals {
+    TIMEOUT_SIG = Q_USER_SIG, 
+
+    SLEEP_REQ_SIG,
+    WAKEUP_REQ_SIG,
+
+    MAX_PUB_SIG,    /* publish-scribe signal end */
+
+    MAX_SIG         /* the last signal */
+}
+
+/** 声明全部构造函数 */
+$declare(AOs::Blinky_ctor)
+
+extern QActive * const AO_Blinky;
+
+#endif /* dpp_h */</text>
+  </file>
+  <!--${.::blinky.c}-->
+  <file name="blinky.c">
+   <text>#include &quot;qpc.h&quot;
+
+#include &quot;safe_std.h&quot; /* portable &quot;safe&quot; &lt;stdio.h&gt;/&lt;string.h&gt; facilities */
+#include &lt;stdlib.h&gt; /* for exit() */
+#include &quot;qtbox.h&quot;
+
+Q_DEFINE_THIS_FILE
+
+#ifdef Q_SPY
+    #error Simple Blinky Application does not provide Spy build configuration
+#endif
+
+// 模块名
+#define MODULE &quot;AO_Blinky&quot;
+
+enum { BSP_TICKS_PER_SEC = 100 };
+
+void BSP_ledOff(void) {
+    PRINTF_S(&quot;%s\n&quot;, &quot;LED OFF&quot;);
+}
+void BSP_ledOn(void) {
+    PRINTF_S(&quot;%s\n&quot;, &quot;LED ON&quot;);
+}
+void Q_onAssert(char const * const module, int loc) {
+    FPRINTF_S(stderr, &quot;Assertion failed in %s:%d&quot;, module, loc);
+    exit(-1);
+}
+void QF_onStartup(void) {}
+void QF_onCleanup(void) {}
+void QF_onClockTick(void) {
+    QTIMEEVT_TICK_X(0U, (void *)0);  /* clock tick processing */
+}
+
+//*============== ask QM to declare the Blinky class ================*/
+$declare ${AOs::Blinky}
+
+/* Local objects -----------------------------------------------------------*/
+static Blinky l_Blinky; /* the single instance of the Table active object */
+
+QActive * const AO_Blinky = &amp;l_Blinky.super;
+
+
+/*================ ask QM to define the Blinky class ================*/
+$define ${AOs::Blinky}
+
+/* Constructor define.......................................................*/
+$define${AOs::Blinky_ctor}</text>
+  </file>
+ </directory>
+</model>

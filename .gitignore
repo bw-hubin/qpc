@@ -54,6 +54,7 @@ Debug/
 Release/
 Spy/
 QSpy/
+nanopb/
 
 lib/
 obj/
