@@ -127,7 +127,10 @@ C_SRCS += \
 	qf_qmact.c \
 	qf_time.c \
 	qf_port.c \
-	blinky.c
+	blinky.c \
+	uart.c \
+	comm.c \
+	ring.c
 
 QS_SRCS := \
 	qs.c \
@@ -143,8 +146,8 @@ endif
 #============================================================================
 # Typically you should not need to change anything below this line
 
-VPATH    += $(QPC)/src/qf $(QP_PORT_DIR) model
-INCLUDES += -I$(QPC)/include -I$(QP_PORT_DIR)
+VPATH    += $(QPC)/src/qf $(QP_PORT_DIR) model comm common
+INCLUDES += -I$(QPC)/include -I$(QP_PORT_DIR) -Iinc -Inanopb -Icommon -I /home/brainware/workspace/ql-ol-sdk/ql-ol-crosstool/sysroots/armv7a-vfp-neon-oe-linux-gnueabi/usr/include/quectel-openlinux-sdk
 
 #-----------------------------------------------------------------------------
 # GNU toolset:
@@ -183,7 +186,7 @@ ifeq (rel, $(CONF)) # Release configuration ..................................
 
 BIN_DIR := build_rel
 # gcc options:
-CFLAGS  = -c -O3 -fno-pie -std=c11 -pedantic -Wall -Wextra -W \
+CFLAGS  = -c -O3 -fno-pie -std=gnu99 -pedantic -Wall -Wextra -W \
 	$(INCLUDES) $(DEFINES) -DNDEBUG
 
 CPPFLAGS = -c -O3 -fno-pie -std=c++11 -pedantic -Wall -Wextra \
@@ -198,7 +201,7 @@ C_SRCS   += $(QS_SRCS)
 VPATH    += $(QPC)/src/qs
 
 # gcc options:
-CFLAGS  = -c -g -O -fno-pie -std=c11 -pedantic -Wall -Wextra -W \
+CFLAGS  = -c -g -O -fno-pie -std=gnu99 -pedantic -Wall -Wextra -W \
 	$(INCLUDES) $(DEFINES) -DQ_SPY
 
 CPPFLAGS = -c -g -O -fno-pie -std=c++11 -pedantic -Wall -Wextra \
@@ -210,7 +213,7 @@ else # default Debug configuration .........................................
 BIN_DIR := build
 
 # gcc options:
-CFLAGS  = -c -g -O -fno-pie -std=c11 -pedantic -Wall -Wextra -W \
+CFLAGS  = -c -g -O -fno-pie -std=gnu99 -pedantic -Wall -Wextra -W \
 	$(INCLUDES) $(DEFINES)
 
 CPPFLAGS = -c -g -O -fno-pie -std=c++11 -pedantic -Wall -Wextra \

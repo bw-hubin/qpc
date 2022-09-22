@@ -3,14 +3,15 @@
  * @Author: zhengdgao
  * @LastEditors: Please set LastEditors
  * @Date: 2019-02-20 23:32:10
- * @LastEditTime: 2019-02-21 00:18:46
+ *
+ * @LastEditTime: 2022-09-20
+ * @LastEditors: hubin
  */
 
 #ifndef UART_H
 #define UART_H
 
-#include "type.h"
-
+#include <stdio.h>
 
 /**
  * @brief  打开串口设备
@@ -43,50 +44,6 @@ void UART_disconnectTTY(int fd);
  */
 int UART_readData(int fd, char *buf, int bufSize);
 
-
-/**
- * @brief  发送HEX数据，字符方式发送
- * @note
- * @param  fd: 设备文件
- * @param  *hexBuf: 数据缓区
- * @param  hexDataLen: 数据长度
- * @retval
- */
-int UART_send_rawdata(int fd, unsigned char *hexBuf, int hexDataLen);
-
-
-/**
- * @brief  发送原始字节流，先将十六进制数据转换成字符再发送，发送完成后再发送一个“帧结束”字符‘\n’
- * @note
- * @param  fd: 串口设备文件
- * @param  buf: 发送数据，HEX
- * @param  len: 发送数据长度
- * @param  charDelay: 延迟
- * @retval 错误代码，0：成功
- */
-int UART_sendDataAsString(int fd, unsigned char *buf, int len, unsigned int charDelay);
-
-
-/**
- * @brief  发送定字节数据
- * @note
- * @param  fd: 设备文件号
- * @param  *vptr: 发送数据缓区
- * @param  n: 发送数据长度
- * @retval 剩余发送数据长度
- */
-ssize_t safe_write(int fd, const void *vptr, size_t n);
-
-
-/**
- * @brief  读指定字节数据
- * @note
- * @param  fd: 设备文件号
- * @param  *vptr: 数据接收缓区
- * @param  n: 读取长度
- * @retval 实际读取长度
- */
-ssize_t safe_read(int fd, void *vptr, size_t n);
-
+int UART_sendData(int fd, char *buf, int bufSize);
 
 #endif

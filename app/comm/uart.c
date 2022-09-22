@@ -22,10 +22,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../NetIO/protocol.h"
-#include "errcode.h"
-#include "helpfunc.h"
-
 static int sendByte(int fd, char c, unsigned int delay);
 static int sendData(int fd, unsigned char *buf, int len, unsigned int charDelay);
 static int setOptions(int fd, int baudrate, int databits, const char parity, const char stop);
@@ -307,44 +303,6 @@ static int setOptions(int fd, int baudrate, int databits, const char parity, con
 }
 
 /**
- * @brief  发送原始字节流，先将十六进制数据转换成字符再发送，发送完成后再发送一个“帧结束”字符‘\n’
- * @note
- * @param  fd: 串口设备文件
- * @param  buf: 发送数据，HEX
- * @param  len: 发送数据长度
- * @param  charDelay: 延迟
- * @retval 错误代码，0：成功
- */
-int UART_sendDataAsString(int fd, unsigned char *buf, int len, unsigned int charDelay)
-{
-    char s[2];
-    int  ret = -1;
-
-    if (fd < 0)
-        return -1;
-
-    for (int i = 0; i < len; i++)
-    {
-        SingleByte2Char(buf[i], s);
-
-        ret = sendData(fd, (unsigned char *)s, 2, 0);
-        if (ret < 0)
-        {
-            return -1;
-        }
-    }
-
-    // data format: string, must add '\n' after send data, as a indication of "end of line"
-    ret = sendByte(fd, '\n', 0);
-    if (ret < 0)
-    {
-        return -1;
-    }
-
-    return 0;
-}
-
-/**
  * @brief  发送数据流，不对数据做任何转换
  * @note
  * @param  fd: 串口设备文件
@@ -394,6 +352,10 @@ int sendByte(int fd, char c, unsigned int delay)
     return 0;
 }
 
+int UART_sendData(int fd, char *buf, int bufSize)
+{
+    sendData(fd, buf, bufSize, 0);
+}
 
 /**
  * @brief  读串口数据
@@ -465,7 +427,7 @@ int UART_connectTTY(char *dev, int baudrate, int dataBits, char parity, char sto
     if (fd < 0)
     {
         perror("opening failed");
-        return -ERR_CPU_COMM_OPEN;
+        return -1;
     }
 
     // flushing is to be done after opening. This prevents first read and write to be spam'ish.
@@ -504,97 +466,12 @@ void UART_disconnectTTY(int fd)
     }
 }
 
-
-/**
- * @brief  发送HEX数据，字符方式发送
- * @note
- * @param  fd: 设备文件
- * @param  *hexBuf: 数据缓区
- * @param  hexDataLen: 数据长度
- * @retval
- */
-int UART_send_rawdata(int fd, unsigned char *hexBuf, int hexDataLen)
-{
-    if ((fd < 0) || (hexBuf == NULL) || (hexDataLen == 0))
-        return -1;
-
-    return UART_sendDataAsString(fd, hexBuf, hexDataLen, 0);
-}
-
-
-/**
- * @brief  发送定字节数据
- * @note
- * @param  fd: 设备文件号
- * @param  *vptr: 发送数据缓区
- * @param  n: 发送数据长度
- * @retval 剩余发送数据长度
- */
-ssize_t safe_write(int fd, const void *vptr, size_t n)
-{
-    size_t      nleft;
-    ssize_t     nwritten;
-    const char *ptr;
-
-    ptr   = vptr;
-    nleft = n;
-
-    while (nleft > 0)
-    {
-        if ((nwritten = write(fd, ptr, nleft)) <= 0)
-        {
-            if (nwritten < 0 && errno == EINTR)
-                nwritten = 0;
-            else
-                return -1;
-        }
-        nleft -= nwritten;
-        ptr += nwritten;
-    }
-    return (n);
-}
-
-/**
- * @brief  读指定字节数据
- * @note
- * @param  fd: 设备文件号
- * @param  *vptr: 数据接收缓区
- * @param  n: 读取长度
- * @retval 实际读取长度
- */
-ssize_t safe_read(int fd, void *vptr, size_t n)
-{
-    size_t  nleft;
-    ssize_t nread;
-    char   *ptr;
-
-    ptr   = vptr;
-    nleft = n;
-
-    while (nleft > 0)
-    {
-        if ((nread = read(fd, ptr, nleft)) < 0)
-        {
-            if (errno == EINTR) //被信号中断
-                nread = 0;
-            else
-                return -1;
-        }
-        else if (nread == 0)
-            break;
-        nleft -= nread;
-        ptr += nread;
-    }
-    return (n - nleft);
-}
-
-
 #if 0
 
 /**
- * Hex2String, String2Hex test case 
+ * Hex2String, String2Hex test case
  */
-int main() 
+int main()
 {
    char strbuf[] = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F";
    // char strbuf[] = "102030405060708090";
@@ -616,7 +493,7 @@ int main()
    }
 
    printf("HEX: \n");
-   for(int i = 0; i < ret; i++) 
+   for(int i = 0; i < ret; i++)
    {
       printf("%2x \n", rbuf[i]);
    }
@@ -633,7 +510,7 @@ int main()
    string[ret] = '\0';
 
    printf("[hex2string], string = %s \n", string);
-   
+
    printf(" \n");
 
    printf("[======== String2Hex test ===========] \n");
@@ -647,7 +524,7 @@ int main()
    }
 
    printf("HEX: \n");
-   for(int i = 0; i < ret; i++) 
+   for(int i = 0; i < ret; i++)
    {
       printf("%2x \n", rbuf[i]);
    }
@@ -671,7 +548,7 @@ int main()
    // char strBuf[] = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F20";
    // char strBuf[] = "1234567890123456789012345678901234567890123456789012345678901234567890";
    char strBuf[] = "111111111011111111101111111110111111111011111111101111111110111111111011111111101111111110111111111011111111101111111110111111111011111111101111111110";
-   
+
    unsigned char hexBuf[1024];
    char recvString[2048];
    unsigned char recvHexBuf[1024];
@@ -679,7 +556,7 @@ int main()
    unsigned int loops = 0;
 
    fd = connectTTY(dev, baund, 8, 'N', '1');
-   if(fd < 0) 
+   if(fd < 0)
    {
       return -1;
    }
@@ -705,8 +582,8 @@ int main()
       if(ret < 0) {
          return -1;
       }
-      
-      //data format: string, must add '\n' after send data, as a indication of "end of line" 
+
+      //data format: string, must add '\n' after send data, as a indication of "end of line"
       // if (-1 == sendByte('\n', 0))
       // {
       //     return -1;
@@ -727,12 +604,12 @@ int main()
 
          if(recvString[readBytes-1] == '\n')
          {
-            printf(" OK, get a complete msg. \n");            
-         
+            printf(" OK, get a complete msg. \n");
+
             int recvBytes = String2Hex(recvString, readBytes - 1, recvHexBuf, 1024);
 
             printf("[Hex2String]: \n");
-            
+
             for(int i = 0; i < recvBytes; i ++)
             {
                printf("%2x \n", recvHexBuf[i]);

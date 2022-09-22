@@ -55,6 +55,15 @@ enum eVK_PROTOCOL_CMD {
     PRODUCTION_DATA     = 0x05;  /* 获取产线数据 */
     PRINT_LOG           = 0x06;  /* 打印日志 */
     VEHICLE_CONTROL     = 0x08;  /* 控车指令 */
+    LOCATION_REPORT     = 0x09;  /* 定位报告 */
+    INPUT_VIN           = 0x0A;  /* 写入VIN码 */
+    REBOOT              = 0x0B;  /* 重启 */
+    SYSTEM_TIME         = 0x0E;  /* 获取系统时间 */
+    VEHICLE_STATE       = 0x0F;  /* 上报车身状态 */
+    MCU_SLEEP           = 0x10;  /* MCU休眠通知 */
+    MCU_AWAKEN          = 0x11;  /* MCU唤醒 */
+    GET_COPYRIGHT       = 0x12;  /* 获取版本号 */
+    PS_CONTROL          = 0x35;  /* 无感控车 */
 }
 
 /* 蓝牙：应答命令字 */
@@ -63,6 +72,15 @@ enum eVK_PROTOCOL_RES {
     UPGRADE_DATA_TRANS_RES      = 0x83;  /* 更新数据传输应答 */
     PRODUCTION_DATA_RES         = 0x85;  /* 获取产线数据应答 */
     VEHICLE_CONTROL_RES         = 0x88;  /* 控车指令应答 */
+    LOCALTION_REPORT_RES        = 0x89;  /* 定位报告应答 */
+    INPUT_VIN_RES               = 0x8A;  /* 写入VIN码应答 */
+    REBOOT_RES                  = 0x8B;  /* 重启应答 */
+    SYSTEM_TIME_RES             = 0x8E;  /* 获取系统时间应答 */
+    VEHICLE_STATE_RES           = 0x8F;  /* 上报车身状态应答 */
+    MCU_SLEEP_RES               = 0x90;  /* MCU休眠通知应答 */
+    MCU_AWAKEN_RES              = 0x91;  /* MCU唤醒应答 */
+    GET_COPYRIGHT_RES           = 0x92;  /* 获取版本号应答 */
+    PS_CONTROL_RES              = 0xB5;  /* 无感控车应答 */
 }
 
 /* 蓝牙：车控指令定义 */
@@ -86,4 +104,31 @@ enum eVK_CAR_CONTROL_CMD {
     PARKING_PAUSE       = 16; /* 暂停泊车 */
     PARKING_CONTINUE    = 17; /* 继续泊车 */
     CAR_DISCONNECT      = 18;
+}
+
+/* 蓝牙：定位报告PEPS操作请求 */
+enum eVK_POSITION_PEPS_REQUEST {
+    PE_FL_DOOR          = 0xD1;  /* 左前门PE */
+    PE_FR_DOOR          = 0xD2;  /* 右前门PE */
+    PE_TRUNK            = 0xD3;  /* 后备箱PE */
+    PS_VEHICLE          = 0xD4;  /* PS */
+}
+
+/* 蓝牙：应答返回码 */
+enum eVK_ACK_CODE {
+    SUCCESS                 = 0;  /* 成功 */
+    LENGTH_INVALID          = 1;  /* 长度无效 */
+    CRC_ERROR               = 2;  /* 数据CUC校验错误 */
+    UPGRADE_SERIAL_ERROR    = 3;  /* 更新数据序列号错误 */
+    PRODUCTION_UNREADY      = 4;  /* 产线数据未准备好 */
+    NONE_NEW_VERSION        = 5;  /* 没有新版本 */
+    NET_REQUEST_FAULT       = 6;  /* 网络请求失败 */
+    SECURITY_NOT_EXIST      = 7;  /* 网络通道不存在 */
+    IN_BOOTLOADER           = 8;  /* 当前处于Bootloader中 */
+    IS_BUSY                 = 9;  /* 当前正忙 */
+    VIN_INVALID             = 10; /* VIN码无效 */
+    PARAM_FORMAT_ERROR      = 11; /* 参数格式错误 */
+    MIRROR_CHECK_ERROR      = 12; /* 镜像校验错误 */
+    TIMEOUT                 = 13; /* 超时 */
+    OTHER_ERROR             = 255;/* 其它错误 */
 }

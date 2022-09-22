@@ -1,7 +1,11 @@
 #include "model/bluetooth.h"
 #include "qpc.h"
+#include "ring.h"
 
 Q_DEFINE_THIS_FILE
+
+volatile static tRINGBUF ring_BT;
+tRINGBUF                *ptRing_BT = &ring_BT;
 
 int main(int argc, char *argv[]) {
     (void)argc;
