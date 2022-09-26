@@ -65,23 +65,23 @@ int COMM_Send_Cmd(int fd, u8 session_id, u8 cmd, u8 target, u8 ack_Flag, u8 *pDa
 int COMM_Send_Upgrade_Meta_Cmd(u8 *pUpgradeMeta, u8 u8Len)
 {
     /* TODO */
-    /*
-    CommSendEvt *pe = Q_NEW(CommSendEvt, COMM_SEND_SIG);
+    printf("\n[BT] Send Upgrade Meta Cmd.");
+    BluetoothSendEvt *pe = Q_NEW(BluetoothSendEvt, BT_SEND_SIG);
     assert(pe != NULL);
 
     if (pe)
     {
-        pe->task_id   = 0xFF;
-        pe->data_type = eDATAType_CMD_PARAM;
-        pe->cmd_id    = PROTOCOL_CMD_GB_VEHICLE_LOGIN;
-        pe->target    = eECUType_TBOX;
-        pe->ack_flag  = 0xFE;
-        pe->data_len  = sizeof(tSYSTIME);
-        pe->data      = (u8 *)ptTime;
-
-        QACTIVE_POST(AO_CommMgr, &pe->super, (void *)0);
+        printf("\n[BT] Packeg Meta Info.");
+        pe->task_id = 0xFF;
+        pe->data_type = 1;
+        pe->cmd_id = 1;
+        pe->target = 1;
+        pe->ack_flag = 0xFE;
+        pe->data_len = u8Len;
+        pe->data = pUpgradeMeta;
+        printf("\n[BT] Send Evts to AO_BluetoothMgr");
+        QACTIVE_POST(AO_BluetoothMgr, &pe->super, (void *)0);
     }
-    */
 
     return 0;
 }
@@ -152,7 +152,7 @@ int COMM_Send_Data(int fd, u8 data_type, u8 session_id, u8 cmd, u8 target, u8 ac
 int COMM_open_dev()
 {
 #ifndef BOARD_COMM
-    char dev[] = "/dev/ttyUSB0";
+    char dev[] = "/dev/tty0";
     int  fd;
 
     printf(" opening  %s \n", dev);
@@ -266,6 +266,7 @@ int COMM_send_msg(int fd, tVK_CMD_MSG *pMsg)
 
     /* 直接发送数据 */
 #ifndef BOARD_COMM
+    printf("\n[BT] !!!Send Data to Comm!!!");
     int ret = UART_sendData(fd, pMsg, sizeof(tVK_CMD_MSG));
     return ret;
 #else

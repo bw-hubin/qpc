@@ -29,15 +29,69 @@ enum BTSignals {
 
     MAX_PUB_SIG,    /* publish-scribe signal end */
 
+    BT_SEND_SIG,
+    BT_SENDERR_SIG,
+    BT_SENDOK_SIG,
+    BT_ECHOED_SIG,
+    BT_OPENOK_SIG,
+
     MAX_SIG         /* the last signal */
 };
+
+#define EVT_MAXSIZE          30 /* 发送事件数据长度 */
+
+/** 声明全部事件类 */
+/*.$declare${Evts::BluetoothSendEvt} vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv*/
+/*.${Evts::BluetoothSendEvt} ...............................................*/
+typedef struct {
+/* protected: */
+    QEvt super;
+
+/* private: */
+    uint16_t data_len;
+    uint8_t* data;
+    uint8_t cmd_id;
+    uint8_t target;
+    uint8_t ack_flag;
+    uint8_t task_id;
+    uint8_t data_type;
+} BluetoothSendEvt;
+/*.$enddecl${Evts::BluetoothSendEvt} ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+/*.$declare${Evts::BluetoothEchoEvt} vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv*/
+/*.${Evts::BluetoothEchoEvt} ...............................................*/
+typedef struct {
+/* protected: */
+    QEvt super;
+
+/* private: */
+    uint8_t cmd_id;
+    uint16_t block_id;
+    int8_t ret;
+} BluetoothEchoEvt;
+/*.$enddecl${Evts::BluetoothEchoEvt} ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+/*.$declare${Evts::BluetoothSendRetEvt} vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv*/
+/*.${Evts::BluetoothSendRetEvt} ............................................*/
+typedef struct {
+/* protected: */
+    QEvt super;
+
+/* private: */
+    uint8_t id;
+    int8_t ret;
+} BluetoothSendRetEvt;
+/*.$enddecl${Evts::BluetoothSendRetEvt} ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 /** 声明全部构造函数 */
 /*.$declare${AOs::Blinky_ctor} vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv*/
 /*.${AOs::Blinky_ctor} .....................................................*/
 void Blinky_ctor(void);
 /*.$enddecl${AOs::Blinky_ctor} ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
+/*.$declare${AOs::BluetoothMgr_ctor} vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv*/
+/*.${AOs::BluetoothMgr_ctor} ...............................................*/
+void BluetoothMgr_ctor(void);
+/*.$enddecl${AOs::BluetoothMgr_ctor} ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
 
 extern QActive * const AO_Blinky;
+extern QActive * const AO_BluetoothMgr;
 
 #endif /* dpp_h */

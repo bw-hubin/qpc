@@ -21,6 +21,7 @@
 #include "safe_std.h" /* portable "safe" <stdio.h>/<string.h> facilities */
 #include <stdlib.h> /* for exit() */
 #include "bluetooth.h"
+#include <ql_type.h>
 
 Q_DEFINE_THIS_FILE
 
@@ -28,15 +29,22 @@ Q_DEFINE_THIS_FILE
     #error Simple Blinky Application does not provide Spy build configuration
 #endif
 
-// Ä£¿éÃû
+//
 #define MODULE "AO_Blinky"
 
 enum { BSP_TICKS_PER_SEC = 100 };
 
+int nCnt;
+
 void BSP_ledOff(void) {
     PRINTF_S("%s\n", "LED OFF");
+    if (nCnt >= 10) {
+    u8 u8Meta[10] = { 0 , 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    COMM_Send_Upgrade_Meta_Cmd(u8Meta, 10);
+    }
 }
 void BSP_ledOn(void) {
+    nCnt += 1;
     PRINTF_S("%s\n", "LED ON");
 }
 void Q_onAssert(char const * const module, int loc) {

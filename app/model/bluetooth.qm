@@ -3,6 +3,48 @@
  <documentation>Blinky example</documentation>
  <!--${qpc}-->
  <framework name="qpc"/>
+ <!--${Evts}-->
+ <package name="Evts" stereotype="0x01">
+  <!--${Evts::BluetoothSendEvt}-->
+  <class name="BluetoothSendEvt" superclass="qpc::QEvt">
+   <documentation>蓝牙指令发送事件</documentation>
+   <!--${Evts::BluetoothSendEvt::data_len}-->
+   <attribute name="data_len" type="uint16_t" visibility="0x02" properties="0x00"/>
+   <!--${Evts::BluetoothSendEvt::data}-->
+   <attribute name="data" type="uint8_t*" visibility="0x02" properties="0x00"/>
+   <!--${Evts::BluetoothSendEvt::cmd_id}-->
+   <attribute name="cmd_id" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${Evts::BluetoothSendEvt::target}-->
+   <attribute name="target" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${Evts::BluetoothSendEvt::ack_flag}-->
+   <attribute name="ack_flag" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${Evts::BluetoothSendEvt::task_id}-->
+   <attribute name="task_id" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${Evts::BluetoothSendEvt::data_type}-->
+   <attribute name="data_type" type="uint8_t" visibility="0x02" properties="0x00"/>
+  </class>
+  <!--${Evts::BluetoothEchoEvt}-->
+  <class name="BluetoothEchoEvt" superclass="qpc::QEvt">
+   <!--${Evts::BluetoothEchoEvt::cmd_id}-->
+   <attribute name="cmd_id" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${Evts::BluetoothEchoEvt::block_id}-->
+   <attribute name="block_id" type="uint16_t" visibility="0x02" properties="0x00"/>
+   <!--${Evts::BluetoothEchoEvt::ret}-->
+   <attribute name="ret" type="int8_t" visibility="0x02" properties="0x00"/>
+  </class>
+  <!--${Evts::BluetoothSendRetEvt}-->
+  <class name="BluetoothSendRetEvt" superclass="qpc::QEvt">
+   <documentation>发送结果事件</documentation>
+   <!--${Evts::BluetoothSendRet~::id}-->
+   <attribute name="id" type="uint8_t" visibility="0x02" properties="0x00">
+    <documentation>当前发送任务序号</documentation>
+   </attribute>
+   <!--${Evts::BluetoothSendRet~::ret}-->
+   <attribute name="ret" type="int8_t" visibility="0x02" properties="0x00">
+    <documentation>发送结果，0：成功，否则为错误代码</documentation>
+   </attribute>
+  </class>
+ </package>
  <!--${AOs}-->
  <package name="AOs" stereotype="0x02">
   <!--${AOs::Blinky}-->
@@ -52,11 +94,716 @@ BSP_TICKS_PER_SEC/2, BSP_TICKS_PER_SEC/2);</action>
     <state_diagram size="24,29"/>
    </statechart>
   </class>
+  <!--${AOs::BluetoothMgr}-->
+  <class name="BluetoothMgr" superclass="qpc::QActive">
+   <documentation>蓝牙通讯管理状态机</documentation>
+   <!--${AOs::BluetoothMgr::requestQueue}-->
+   <attribute name="requestQueue" type="QEQueue" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::requestQSto[100]}-->
+   <attribute name="requestQSto[100]" type="QEvt const *" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::timeEvt}-->
+   <attribute name="timeEvt" type="QTimeEvt" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::retry_times}-->
+   <attribute name="retry_times" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::fd}-->
+   <attribute name="fd" type="int32_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::pData}-->
+   <attribute name="pData" type="u8*" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::data_len}-->
+   <attribute name="data_len" type="int32_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::block_amount}-->
+   <attribute name="block_amount" type="uint16_t" visibility="0x02" properties="0x00">
+    <documentation>分块总数</documentation>
+   </attribute>
+   <!--${AOs::BluetoothMgr::block_id}-->
+   <attribute name="block_id" type="uint16_t" visibility="0x02" properties="0x00">
+    <documentation>当前分块序号</documentation>
+   </attribute>
+   <!--${AOs::BluetoothMgr::cmd_id}-->
+   <attribute name="cmd_id" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::target}-->
+   <attribute name="target" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::ack_flag}-->
+   <attribute name="ack_flag" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::resendLoops}-->
+   <attribute name="resendLoops" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::nBytesRemain}-->
+   <attribute name="nBytesRemain" type="uint32_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::sendRet}-->
+   <attribute name="sendRet" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::nBytesWritten}-->
+   <attribute name="nBytesWritten" type="uint32_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::reackLoops}-->
+   <attribute name="reackLoops" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::task_id}-->
+   <attribute name="task_id" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::data_type}-->
+   <attribute name="data_type" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothMgr::SM}-->
+   <statechart properties="0x01">
+    <!--${AOs::BluetoothMgr::SM::initial}-->
+    <initial target="../1">
+     <action>me-&gt;fd = -1;
+me-&gt;retry_times = 0;</action>
+     <initial_glyph conn="5,2,5,0,25,4">
+      <action box="0,-2,10,2"/>
+     </initial_glyph>
+    </initial>
+    <!--${AOs::BluetoothMgr::SM::active}-->
+    <state name="active">
+     <!--${AOs::BluetoothMgr::SM::active::initial}-->
+     <initial target="../2">
+      <initial_glyph conn="116,32,5,0,6,4">
+       <action box="0,-2,10,2"/>
+      </initial_glyph>
+     </initial>
+     <!--${AOs::BluetoothMgr::SM::active::BT_SEND}-->
+     <tran trig="BT_SEND">
+      <action brief="defer">printf(&quot;[AO_CommMgr] state: active EVT: BT_SEND&quot;);
+
+/* defer the new request event... */
+if (QActive_defer(&amp;me-&gt;super, &amp;me-&gt;requestQueue, e)) {
+
+    printf(&quot;[AO_CommMgr] defered cmd[#%d]&quot;,  (int)Q_EVT_CAST(BluetoothSendEvt)-&gt;cmd_id);
+}
+else {
+    /* notify the request sender that his request was denied... */
+    printf(&quot;[%s] WARNING!!! requestQueue is full, and will not accept new send request&quot;, MODULE);
+    printf(&quot;[AO_CommMgr] Request #%d IGNORED;\n&quot;,
+           (int)Q_EVT_CAST(BluetoothSendEvt)-&gt;cmd_id);
+    
+    /* should never been here */
+    //Q_ASSERT(0);
+}</action>
+      <tran_glyph conn="4,16,3,-1,28">
+       <action box="0,-2,27,2"/>
+      </tran_glyph>
+     </tran>
+     <!--${AOs::BluetoothMgr::SM::active::testing}-->
+     <state name="testing">
+      <documentation>尝试打开串口并发送数据</documentation>
+      <entry>me-&gt;retry_times = 0;</entry>
+      <exit>me-&gt;retry_times = 0;</exit>
+      <!--${AOs::BluetoothMgr::SM::active::testing::initial}-->
+      <initial target="../2">
+       <initial_glyph conn="149,45,4,1,4,-3">
+        <action box="0,-2,4,2"/>
+       </initial_glyph>
+      </initial>
+      <!--${AOs::BluetoothMgr::SM::active::testing::BT_SENDERR}-->
+      <tran trig="BT_SENDERR" target="../../3">
+       <tran_glyph conn="116,45,3,2,23,-17">
+        <action box="0,-2,15,2"/>
+       </tran_glyph>
+      </tran>
+      <!--${AOs::BluetoothMgr::SM::active::testing::open}-->
+      <state name="open">
+       <entry>if(me-&gt;fd &lt; 0) {
+    me-&gt;fd = COMM_open_dev();
+}
+
+if(me-&gt;fd &lt; 0) {
+    QTimeEvt_armX(&amp;me-&gt;timeEvt, OPEN_TOUT, 0U);
+}
+else
+{
+    static const QEvt evt = { BT_OPENOK_SIG, 0U, 0U };
+    QACTIVE_POST(&amp;me-&gt;super, &amp;evt, me);
+}</entry>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;timeEvt);</exit>
+       <!--${AOs::BluetoothMgr::SM::active::testing::open::TIMEOUT}-->
+       <tran trig="TIMEOUT">
+        <action>me-&gt;retry_times++;</action>
+        <!--${AOs::BluetoothMgr::SM::active::testing::open::TIMEOUT::[else]}-->
+        <choice target="../../../../3">
+         <guard>else</guard>
+         <action brief="error"/>
+         <choice_glyph conn="131,55,5,2,19,-27">
+          <action box="1,-2,14,2"/>
+         </choice_glyph>
+        </choice>
+        <!--${AOs::BluetoothMgr::SM::active::testing::open::TIMEOUT::[未超过次数]}-->
+        <choice target="../..">
+         <guard brief="未超过次数">me-&gt;retry_times &lt; COMMOPEN_TIMES</guard>
+         <action brief="retry"/>
+         <choice_glyph conn="131,55,4,1,4,17,2,-2">
+          <action box="1,2,15,2"/>
+         </choice_glyph>
+        </choice>
+        <tran_glyph conn="120,55,3,-1,11">
+         <action box="0,-2,9,2"/>
+        </tran_glyph>
+       </tran>
+       <!--${AOs::BluetoothMgr::SM::active::testing::open::BT_OPENOK}-->
+       <tran trig="BT_OPENOK" target="../../../4">
+        <action>/* notify comm is ready for polling msg */
+//CommPollEvt *pe = Q_NEW(CommPollEvt, COMM_POLLING_SIG);
+//pe-&gt;fd = me-&gt;fd;
+//QACTIVE_POST(AO_CommPolling, &amp;pe-&gt;super, me);</action>
+        <tran_glyph conn="120,62,3,1,-16">
+         <action box="-14,-2,14,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="120,47,26,17">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="116,36,36,34">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <!--${AOs::BluetoothMgr::SM::active::error}-->
+     <state name="error">
+      <entry>QTimeEvt_armX(&amp;me-&gt;timeEvt, TEST_TOUT, 0U);</entry>
+      <exit>QTimeEvt_disarm(&amp;me-&gt;timeEvt);</exit>
+      <!--${AOs::BluetoothMgr::SM::active::error::TIMEOUT}-->
+      <tran trig="TIMEOUT" target="../..">
+       <tran_glyph conn="112,23,3,1,58">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="112,14,43,14">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <!--${AOs::BluetoothMgr::SM::active::serving}-->
+     <state name="serving">
+      <entry>Q_ASSERT(me-&gt;fd &gt; 0);
+printf(&quot;[AO_CommMgr] state: serving&quot;);</entry>
+      <!--${AOs::BluetoothMgr::SM::active::serving::initial}-->
+      <initial target="../3">
+       <initial_glyph conn="86,32,4,1,8,-10">
+        <action box="0,-2,10,2"/>
+       </initial_glyph>
+      </initial>
+      <!--${AOs::BluetoothMgr::SM::active::serving::BT_SENDERR}-->
+      <tran trig="BT_SENDERR" target="../../3">
+       <action>printf(&quot;[AO_CommMgr] state: sending_s, evt: BT_SENDERR&quot;);
+//BluetoothSendRetEvt *pe = Q_NEW(BluetoothSendRetEvt, BT_SENDERR_SIG);
+//if(pe) {
+//    pe-&gt;id = me-&gt;task_id;
+//    QACTIVE_POST(AO_NetTask[me-&gt;task_id], &amp;pe-&gt;super, (void*)0);
+//}</action>
+       <tran_glyph conn="8,32,3,3,42,-13,62">
+        <action box="0,-2,18,2"/>
+       </tran_glyph>
+      </tran>
+      <!--${AOs::BluetoothMgr::SM::active::serving::send_single_frame}-->
+      <state name="send_single_frame">
+       <entry>me-&gt;retry_times = 0;</entry>
+       <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::initial}-->
+       <initial target="../2">
+        <initial_glyph conn="74,61,4,1,3,-4">
+         <action box="0,-2,10,2"/>
+        </initial_glyph>
+       </initial>
+       <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::echoing_s}-->
+       <state name="echoing_s">
+        <entry>printf(&quot;[%s] state: echoing_s&quot;, MODULE);
+QTimeEvt_armX(&amp;me-&gt;timeEvt, ECHO_TOUT, 0U);</entry>
+        <exit>QTimeEvt_disarm(&amp;me-&gt;timeEvt);</exit>
+        <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::echoing_s::TIMEOUT}-->
+        <tran trig="TIMEOUT">
+         <action>me-&gt;retry_times ++;</action>
+         <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::echoing_s::TIMEOUT::[me->retry_times<ECHO_TIMES]}-->
+         <choice target="../../../2">
+          <guard>me-&gt;retry_times &lt; ECHO_TIMES</guard>
+          <action brief="resend"/>
+          <choice_glyph conn="52,94,5,1,22,-24,-4">
+           <action box="1,-2,25,5"/>
+          </choice_glyph>
+         </choice>
+         <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::echoing_s::TIMEOUT::[else]}-->
+         <choice target="../../../../3">
+          <guard brief="else">else</guard>
+          <action brief="send failed"/>
+          <choice_glyph conn="52,94,4,1,5,34,-55,-10">
+           <action box="1,3,19,3"/>
+          </choice_glyph>
+         </choice>
+         <tran_glyph conn="38,94,3,-1,14">
+          <action box="0,-2,13,2"/>
+         </tran_glyph>
+        </tran>
+        <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::echoing_s::BT_ECHOED}-->
+        <tran trig="BT_ECHOED">
+         <action>printf(&quot;[%s] state: echoing_s, evt: BT_ECHOED&quot;, MODULE);
+BluetoothEchoEvt *pe = Q_EVT_CAST(BluetoothEchoEvt);</action>
+         <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::echoing_s::BT_ECHOED::[pe->cmd_id==me->cmd_id]}-->
+         <choice target="../../../../3">
+          <guard>pe-&gt;cmd_id == me-&gt;cmd_id</guard>
+          <action>BluetoothEchoEvt *pe = Q_NEW(BluetoothEchoEvt, BT_ECHOED_SIG);
+pe-&gt;cmd_id = me-&gt;cmd_id;
+//if((me-&gt;task_id &gt;= 0) &amp;&amp; (me-&gt;task_id &lt; N_TASK)) {
+//    QACTIVE_POST(AO_NetTask[me-&gt;task_id], &amp;pe-&gt;super, (void*)0);
+//}</action>
+          <choice_glyph conn="53,86,5,1,29,-40,-6">
+           <action box="1,-3,20,2"/>
+          </choice_glyph>
+         </choice>
+         <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::echoing_s::BT_ECHOED::[mismatch]}-->
+         <choice>
+          <guard brief="mismatch">else</guard>
+          <action>printf(&quot;[%s] state: echoing_s, evt: BT_ECHOED, err: CMD MIS-MATCHED&quot;, MODULE);</action>
+          <choice_glyph conn="53,86,4,-1,4,10">
+           <action box="1,2,10,2"/>
+          </choice_glyph>
+         </choice>
+         <tran_glyph conn="38,86,3,-1,15">
+          <action box="0,-2,13,2"/>
+         </tran_glyph>
+        </tran>
+        <state_glyph node="38,78,32,24">
+         <entry box="1,2,6,2"/>
+         <exit box="1,4,6,2"/>
+        </state_glyph>
+       </state>
+       <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::sending_s}-->
+       <state name="sending_s">
+        <entry>
+printf(&quot;[AO_CommMgr] state: sending_s, data_type = %d, cmd = %02x,&quot;, me-&gt;data_type, me-&gt;cmd_id);
+
+int ret = COMM_Send_Data(me-&gt;fd,
+                        me-&gt;data_type,
+                        me-&gt;task_id,
+                        me-&gt;cmd_id,
+                        me-&gt;target,
+                        me-&gt;ack_flag,
+                        me-&gt;pData,
+                        me-&gt;data_len);
+
+if(ret == 0) {
+    QACTIVE_POST(&amp;me-&gt;super, Q_NEW(QEvt, BT_SENDOK_SIG), (void*)0);
+} else {
+    QACTIVE_POST(&amp;me-&gt;super, Q_NEW(QEvt, BT_SENDERR_SIG), (void*)0);
+}</entry>
+        <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::sending_s::BT_SENDOK}-->
+        <tran trig="BT_SENDOK">
+         <action>printf(&quot;[AO_CommMgr] state: sending_s, evt: BT_SENDOK&quot;);</action>
+         <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::sending_s::BT_SENDOK::[else]}-->
+         <choice target="../../../../3">
+          <guard>else</guard>
+          <choice_glyph conn="53,69,5,1,27,-21,-4">
+           <action box="2,-2,10,2"/>
+          </choice_glyph>
+         </choice>
+         <!--${AOs::BluetoothMgr::SM::active::serving::send_single_fram~::sending_s::BT_SENDOK::[(me->task_id<10)&&(me->ack_flag~}-->
+         <choice target="../../../1">
+          <guard>(me-&gt;task_id &lt; 10) &amp;&amp; (me-&gt;ack_flag == 0xFE)</guard>
+          <choice_glyph conn="53,69,4,0,4,12,5">
+           <action box="1,2,23,2"/>
+          </choice_glyph>
+         </choice>
+         <tran_glyph conn="38,69,3,-1,15">
+          <action box="0,-2,17,2"/>
+         </tran_glyph>
+        </tran>
+        <state_glyph node="38,62,32,13">
+         <entry box="1,2,6,2"/>
+        </state_glyph>
+       </state>
+       <state_glyph node="34,56,42,48">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
+      </state>
+      <!--${AOs::BluetoothMgr::SM::active::serving::idle}-->
+      <state name="idle">
+       <entry>me-&gt;retry_times = 0;
+me-&gt;resendLoops = 0;
+
+printf(&quot;[AO_BluetoothMgr] state: idle&quot;);
+
+/* recall the oldest deferred request... */
+if (QActive_recall(&amp;me-&gt;super, &amp;me-&gt;requestQueue)) {
+    printf(&quot;Request recalled\n&quot;);
+}
+else {
+    printf(&quot;No deferred requests\n&quot;);
+}</entry>
+       <!--${AOs::BluetoothMgr::SM::active::serving::idle::BT_SEND}-->
+       <tran trig="BT_SEND" target="../../2">
+        <action brief="send">printf(&quot;[AO_BluetoothMgr] state: idle EVT: BT_SEND&quot;);
+
+BluetoothSendEvt* pe = Q_EVT_CAST(BluetoothSendEvt);
+me-&gt;task_id = pe-&gt;task_id;
+me-&gt;data_type = pe-&gt;data_type;
+me-&gt;cmd_id = pe-&gt;cmd_id;
+me-&gt;ack_flag = pe-&gt;ack_flag;
+me-&gt;target = pe-&gt;target;
+me-&gt;pData = pe-&gt;data;
+me-&gt;data_len = pe-&gt;data_len;</action>
+        <tran_glyph conn="34,44,3,0,23,12">
+         <action box="1,-3,18,3"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="34,36,42,16">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="8,24,96,82">
+       <entry box="1,2,6,2"/>
+      </state_glyph>
+     </state>
+     <state_glyph node="4,6,166,102"/>
+    </state>
+    <state_diagram size="259,113"/>
+   </statechart>
+  </class>
+  <!--${AOs::BluetoothPolling}-->
+  <class name="BluetoothPolling" superclass="qpc::QActive">
+   <!--${AOs::BluetoothPolling::timeEvt}-->
+   <attribute name="timeEvt" type="QTimeEvt" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothPolling::fd}-->
+   <attribute name="fd" type="int32_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothPolling::buf[FRAME_SIZE]}-->
+   <attribute name="buf[FRAME_SIZE]" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothPolling::requestQueue}-->
+   <attribute name="requestQueue" type="QEQueue" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothPolling::requestQSto[100]}-->
+   <attribute name="requestQSto[100]" type="QEvt const *" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothPolling::msg_defered_cnt}-->
+   <attribute name="msg_defered_cnt" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothPolling::SM}-->
+   <statechart properties="0x01">
+    <!--${AOs::BluetoothPolling::SM::initial}-->
+    <initial target="../2">
+     <action>QActive_subscribe(&amp;me-&gt;super, LPM_SLEEPREQ_SIG);
+QActive_subscribe(&amp;me-&gt;super, LPM_WAKEUP_SIG);
+QActive_subscribe(&amp;me-&gt;super, LPM_SMSWAKEUP_SIG);
+
+
+log_i(&quot;[%s] child thread lwpid = %u \n&quot;, MODULE, syscall(SYS_gettid));
+log_i(&quot;[%s] child thread tid = %u \n&quot;, MODULE, pthread_self());</action>
+     <initial_glyph conn="12,5,5,0,8,3">
+      <action box="0,-2,10,2"/>
+     </initial_glyph>
+    </initial>
+    <!--${AOs::BluetoothPolling::SM::sleep}-->
+    <state name="sleep">
+     <entry>log_i(&quot;[%s] state: sleep, entry \n&quot;, MODULE);</entry>
+     <!--${AOs::BluetoothPolling::SM::sleep::LPM_WAKEUP}-->
+     <tran trig="LPM_WAKEUP" target="../../2">
+      <action>log_i(&quot;[%s] state: sleep, evt: LPM_WAKEUP \n&quot;, MODULE);</action>
+      <tran_glyph conn="88,21,3,1,31,17,-40">
+       <action box="0,-2,17,2"/>
+      </tran_glyph>
+     </tran>
+     <!--${AOs::BluetoothPolling::SM::sleep::LPM_SMSWAKEUP}-->
+     <tran trig="LPM_SMSWAKEUP" target="../../2">
+      <action>log_i(&quot;[%s] state: sleep, evt: LPM_SMSWAKEUP \n&quot;, MODULE);</action>
+      <tran_glyph conn="88,25,3,1,27,9,-36">
+       <action box="0,-2,16,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="88,8,24,22">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <!--${AOs::BluetoothPolling::SM::normal}-->
+    <state name="normal">
+     <!--${AOs::BluetoothPolling::SM::normal::initial}-->
+     <initial target="../4">
+      <initial_glyph conn="40,19,4,1,2,-4">
+       <action box="0,-2,10,2"/>
+      </initial_glyph>
+     </initial>
+     <!--${AOs::BluetoothPolling::SM::normal::LPM_SLEEPREQ}-->
+     <tran trig="LPM_SLEEPREQ" target="../../1">
+      <action>//QTimeEvt_armX(&amp;me-&gt;sleepTimeEvt, SLEEPDELAY_TOUT, 0U);
+log_i(&quot;[%s] state: normal, evt: LPM_SLEEPREQ \n&quot;, MODULE);</action>
+      <tran_glyph conn="11,15,3,3,77">
+       <action box="0,-2,15,2"/>
+      </tran_glyph>
+     </tran>
+     <!--${AOs::BluetoothPolling::SM::normal::active}-->
+     <state name="active">
+      <entry>//QTimeEvt_armX(&amp;me-&gt;timeEvt, POLL_TOUT, POLL_TOUT);
+log_d(&quot;[%s] state: active, entry \n&quot;, MODULE);</entry>
+      <exit>// QTimeEvt_disarm(&amp;me-&gt;timeEvt);</exit>
+      <!--${AOs::BluetoothPolling::SM::normal::active::initial}-->
+      <initial target="../2">
+       <initial_glyph conn="62,52,4,1,6,-3">
+        <action box="0,-2,10,2"/>
+       </initial_glyph>
+      </initial>
+      <!--${AOs::BluetoothPolling::SM::normal::active::COMM_READERR}-->
+      <tran trig="COMM_READERR" target="../../3">
+       <action>log_i(&quot;[%s] state: active, evt: COMM_READERR \n&quot;, MODULE);</action>
+       <tran_glyph conn="17,47,3,2,39,-17">
+        <action box="0,-2,19,2"/>
+       </tran_glyph>
+      </tran>
+      <!--${AOs::BluetoothPolling::SM::normal::active::polling}-->
+      <state name="polling">
+       <entry>//printf(&quot;[AO_CommPolling] state: polling&quot;);
+static u8 buf[FRAME_SIZE];
+static int nReadBytes = 0;
+static unsigned int loops = 0;
+
+
+nReadBytes = COMM_poll_msg(me-&gt;fd, buf, FRAME_SIZE);
+//printf(&quot;[AO_CommPolling] loops: %d, COMM_poll_msg, ret = %d &quot;, loops, nReadBytes);
+
+if(nReadBytes &lt; 0) {
+    static const QEvt CommReadEvt = { COMM_READERR_SIG, 0U, 0U };
+    QACTIVE_POST(&amp;me-&gt;super, &amp;CommReadEvt, me);
+} 
+else if(nReadBytes == 0) {
+//    printf(&quot;[AO_CommPolling] nReadBytes = 0 &quot;);
+//    QTimeEvt_armX(&amp;me-&gt;timeEvt, REPOLL_TOUT, 0);
+}
+else {
+#if 1
+    log_d(&quot;[%s] state: polling, Get MSG, data: \n&quot;, MODULE);
+    PrintHex(me-&gt;buf, nReadBytes);
+#endif
+
+    int ret = RING_Attach_Data(ptRing_Comm, buf, nReadBytes);
+    //Q_ASSERT(0 == ret);
+    if(ret == 0) {
+        /* 检查是否收到帧结束符'\n' */
+        for(int n = 0; n &lt; nReadBytes; n++) {
+            if(buf[n] == '\n') {
+                me-&gt;msg_defered_cnt ++;
+                static const QEvt NewMsgEvt = { COMM_NEWMSG_SIG, 0U, 0U };
+                QACTIVE_POST(AO_CommParsing, &amp;NewMsgEvt, me);
+            }
+        }
+    }
+
+}
+
+
+static const QEvt evt_1 = { COMM_POLLING_SIG, 0U, 0U };
+QACTIVE_POST(&amp;me-&gt;super, &amp;evt_1, me);
+
+
+
+</entry>
+       <exit>QTimeEvt_disarm(&amp;me-&gt;timeEvt);</exit>
+       <!--${AOs::BluetoothPolling::SM::normal::active::polling::COMM_POLLING}-->
+       <tran trig="COMM_POLLING" target="..">
+        <tran_glyph conn="26,65,3,1,36,-3,-3">
+         <action box="0,-2,14,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="26,53,33,16">
+        <entry box="1,2,6,2"/>
+        <exit box="1,4,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="17,38,56,35">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <!--${AOs::BluetoothPolling::SM::normal::err}-->
+     <state name="err">
+      <entry>printf(&quot;[AO_CommPolling] state: ERR &quot;);
+
+QTimeEvt_armX(&amp;me-&gt;timeEvt, POLL_TOUT, 0);</entry>
+      <exit>QTimeEvt_disarm(&amp;me-&gt;timeEvt);</exit>
+      <!--${AOs::BluetoothPolling::SM::normal::err::TIMEOUT}-->
+      <tran trig="TIMEOUT" target="../../2">
+       <tran_glyph conn="47,27,3,0,21,11">
+        <action box="0,-2,10,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="47,19,25,11">
+       <entry box="1,2,6,2"/>
+       <exit box="1,4,6,2"/>
+      </state_glyph>
+     </state>
+     <!--${AOs::BluetoothPolling::SM::normal::idle}-->
+     <state name="idle">
+      <!--${AOs::BluetoothPolling::SM::normal::idle::COMM_POLLING}-->
+      <tran trig="COMM_POLLING" target="../../2">
+       <action brief="enable polling">me-&gt;fd = Q_EVT_CAST(CommPollEvt)-&gt;fd;
+Q_ASSERT(me-&gt;fd &gt; 0);
+log_d(&quot;[%s] state: idle, evt: COMM_POLLING, fd = %d \n&quot;, MODULE, me-&gt;fd);</action>
+       <tran_glyph conn="17,26,3,0,26,12">
+        <action box="0,-2,15,2"/>
+       </tran_glyph>
+      </tran>
+      <state_glyph node="17,19,19,11"/>
+     </state>
+     <state_glyph node="11,8,68,70"/>
+    </state>
+    <state_diagram size="125,93"/>
+   </statechart>
+  </class>
+  <!--${AOs::BluetoothParsing}-->
+  <class name="BluetoothParsing" superclass="qpc::QActive">
+   <!--${AOs::BluetoothParsing::requestQueue}-->
+   <attribute name="requestQueue" type="QEQueue" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothParsing::requestQSto[50]}-->
+   <attribute name="requestQSto[50]" type="QEvt const *" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothParsing::msg_defered_cnt}-->
+   <attribute name="msg_defered_cnt" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothParsing::sleepReq}-->
+   <attribute name="sleepReq" type="uint8_t" visibility="0x02" properties="0x00"/>
+   <!--${AOs::BluetoothParsing::SM}-->
+   <statechart properties="0x01">
+    <!--${AOs::BluetoothParsing::SM::initial}-->
+    <initial target="../1">
+     <action>me-&gt;sleepReq = 0;
+
+log_i(&quot;[%s] child thread lwpid = %u \n&quot;, MODULE, syscall(SYS_gettid));
+log_i(&quot;[%s] child thread tid = %u \n&quot;, MODULE, pthread_self());</action>
+     <initial_glyph conn="8,12,5,0,12,4">
+      <action box="0,-2,10,2"/>
+     </initial_glyph>
+    </initial>
+    <!--${AOs::BluetoothParsing::SM::normal}-->
+    <state name="normal">
+     <entry>me-&gt;sleepReq = 0;</entry>
+     <!--${AOs::BluetoothParsing::SM::normal::initial}-->
+     <initial target="../3">
+      <initial_glyph conn="78,25,5,0,-8,5">
+       <action box="0,-2,10,2"/>
+      </initial_glyph>
+     </initial>
+     <!--${AOs::BluetoothParsing::SM::normal::COMM_NEWMSG}-->
+     <tran trig="COMM_NEWMSG">
+      <action>/* defer the new request event... */
+if (QActive_defer(&amp;me-&gt;super, &amp;me-&gt;requestQueue, e)) {
+}
+else {
+    /* should never been here */
+    //Q_ASSERT(0);
+}</action>
+      <tran_glyph conn="7,27,3,-1,17">
+       <action box="0,-2,14,2"/>
+      </tran_glyph>
+     </tran>
+     <!--${AOs::BluetoothParsing::SM::normal::LPM_SLEEPREQ}-->
+     <tran trig="LPM_SLEEPREQ">
+      <action>log_i(&quot;[%s] state: normal, evt: LPM_SLEEPREQ \n&quot;, MODULE);
+me-&gt;sleepReq = 1;</action>
+      <tran_glyph conn="7,22,3,-1,17">
+       <action box="0,-2,16,2"/>
+      </tran_glyph>
+     </tran>
+     <!--${AOs::BluetoothParsing::SM::normal::parsing}-->
+     <state name="parsing">
+      <!--${AOs::BluetoothParsing::SM::normal::parsing::initial}-->
+      <initial target="../1">
+       <initial_glyph conn="19,35,5,0,8,3">
+        <action box="0,-2,10,2"/>
+       </initial_glyph>
+      </initial>
+      <!--${AOs::BluetoothParsing::SM::normal::parsing::parsing_idle}-->
+      <state name="parsing_idle">
+       <entry>if (QActive_recall(&amp;me-&gt;super, &amp;me-&gt;requestQueue)) {
+    log_d(&quot;[%s] state: parsing_idle, Request recalled \n&quot;, MODULE);
+}
+else {
+    log_d(&quot;[%s] state: parsing_idle, No deferred requests \n&quot;, MODULE);
+
+    if(1 == me-&gt;sleepReq) {
+        static const QEvt te = {LPM_SLEEPREQ_SIG, 0, 0};
+        QACTIVE_POST(&amp;me-&gt;super, &amp;te, (void*)0);
+    }
+}</entry>
+       <!--${AOs::BluetoothParsing::SM::normal::parsing::parsing_idle::COMM_NEWMSG}-->
+       <tran trig="COMM_NEWMSG" target="../../2">
+        <action>log_d(&quot;[%s] state: parsing_idle, evt: COMM_NEWMSG \n&quot;, MODULE);</action>
+        <tran_glyph conn="23,45,3,3,26,-4,6">
+         <action box="0,-2,14,2"/>
+        </tran_glyph>
+       </tran>
+       <!--${AOs::BluetoothParsing::SM::normal::parsing::parsing_idle::LPM_SLEEPREQ}-->
+       <tran trig="LPM_SLEEPREQ" target="../../../../2">
+        <action>log_i(&quot;[%s] state: normal, evt: LPM_SLEEPREQ \n&quot;, MODULE);
+</action>
+        <tran_glyph conn="23,50,3,3,14,18,59,-21,5">
+         <action box="0,-2,16,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="23,38,20,16">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
+      </state>
+      <!--${AOs::BluetoothParsing::SM::normal::parsing::parsing_busy}-->
+      <state name="parsing_busy">
+       <entry>log_d(&quot;[%s] state: parsing_busy, entry \n&quot;, MODULE);
+int ret = COMM_handle_msg_Ring(ptRing_Comm);
+//Q_ASSERT(0 == ret);
+
+static const QEvt MsgDoneEvt = { COMM_PARSEDONE_SIG, 0U, 0U };
+QACTIVE_POST(&amp;me-&gt;super, &amp;MsgDoneEvt, me);</entry>
+       <!--${AOs::BluetoothParsing::SM::normal::parsing::parsing_busy::COMM_PARSEDONE}-->
+       <tran trig="COMM_PARSEDONE" target="../../1">
+        <action>log_d(&quot;[%s] state: parsing, evt: COMM_MSGDONE \n&quot;, MODULE);</action>
+        <tran_glyph conn="76,47,1,1,-29,3,-4">
+         <action box="-16,-2,19,2"/>
+        </tran_glyph>
+       </tran>
+       <state_glyph node="55,38,21,16">
+        <entry box="1,2,6,2"/>
+       </state_glyph>
+      </state>
+      <state_glyph node="14,30,68,30"/>
+     </state>
+     <state_glyph node="7,16,81,48">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <!--${AOs::BluetoothParsing::SM::sleep}-->
+    <state name="sleep">
+     <entry>log_i(&quot;[%s] state: sleep, entry \n&quot;, MODULE);</entry>
+     <!--${AOs::BluetoothParsing::SM::sleep::LPM_WAKEUP}-->
+     <tran trig="LPM_WAKEUP" target="../../1">
+      <action>log_i(&quot;[%s] state: sleep, evt: LPM_WAKEUP \n&quot;, MODULE);
+me-&gt;sleepReq = 0;</action>
+      <tran_glyph conn="101,51,3,1,25,-16,-38">
+       <action box="0,-2,15,2"/>
+      </tran_glyph>
+     </tran>
+     <!--${AOs::BluetoothParsing::SM::sleep::LPM_SMSWAKEUP}-->
+     <tran trig="LPM_SMSWAKEUP" target="../../1">
+      <action>log_i(&quot;[%s] state: sleep, evt: LPM_SMSWAKEUP \n&quot;, MODULE);</action>
+      <tran_glyph conn="101,57,3,1,29,-28,-42">
+       <action box="0,-2,17,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="101,39,22,25">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="134,77"/>
+   </statechart>
+  </class>
   <!--${AOs::Blinky_ctor}-->
   <operation name="Blinky_ctor" type="void" visibility="0x00" properties="0x00">
    <code>Blinky *me = &amp;l_Blinky;
 QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;Blinky_initial));
 QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
+  </operation>
+  <!--${AOs::BluetoothMgr_ctor}-->
+  <operation name="BluetoothMgr_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>BluetoothMgr *me = &amp;l_BluetoothMgr;
+QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;BluetoothMgr_initial));
+QEQueue_init(&amp;me-&gt;requestQueue,
+             me-&gt;requestQSto, Q_DIM(me-&gt;requestQSto));
+QTimeEvt_ctorX(&amp;me-&gt;timeEvt, &amp;me-&gt;super, TIMEOUT_SIG, 0U);</code>
+  </operation>
+  <!--${AOs::BluetoothPolling_ctor}-->
+  <operation name="BluetoothPolling_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>BluetoothPolling *me = &amp;l_BluetoothPolling;
+QEQueue_init(&amp;me-&gt;requestQueue,
+             me-&gt;requestQSto, Q_DIM(me-&gt;requestQSto));
+QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;BluetoothPolling_initial));</code>
+  </operation>
+  <!--${AOs::BluetoothParsing_ctor}-->
+  <operation name="BluetoothParsing_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>BluetoothParsing *me = &amp;l_BluetoothParsing;
+QEQueue_init(&amp;me-&gt;requestQueue,
+             me-&gt;requestQSto, Q_DIM(me-&gt;requestQSto));
+QActive_ctor(&amp;me-&gt;super, Q_STATE_CAST(&amp;BluetoothParsing_initial));</code>
   </operation>
  </package>
  <!--${.}-->
@@ -76,13 +823,28 @@ enum BTSignals {
 
     MAX_PUB_SIG,    /* publish-scribe signal end */
 
+    BT_SEND_SIG,
+    BT_SENDERR_SIG,
+    BT_SENDOK_SIG,
+    BT_ECHOED_SIG,
+    BT_OPENOK_SIG,
+
     MAX_SIG         /* the last signal */
-}
+};
+
+#define EVT_MAXSIZE          30 /* 发送事件数据长度 */
+
+/** 声明全部事件类 */
+$declare(Evts::BluetoothSendEvt)
+$declare(Evts::BluetoothEchoEvt)
+$declare(Evts::BluetoothSendRetEvt)
 
 /** 声明全部构造函数 */
 $declare(AOs::Blinky_ctor)
+$declare(AOs::BluetoothMgr_ctor)
 
 extern QActive * const AO_Blinky;
+extern QActive * const AO_BluetoothMgr;
 
 #endif /* dpp_h */</text>
   </file>
@@ -92,7 +854,7 @@ extern QActive * const AO_Blinky;
 
 #include &quot;safe_std.h&quot; /* portable &quot;safe&quot; &lt;stdio.h&gt;/&lt;string.h&gt; facilities */
 #include &lt;stdlib.h&gt; /* for exit() */
-#include &quot;qtbox.h&quot;
+#include &quot;bluetooth.h&quot;
 
 Q_DEFINE_THIS_FILE
 
@@ -135,6 +897,124 @@ $define ${AOs::Blinky}
 
 /* Constructor define.......................................................*/
 $define${AOs::Blinky_ctor}</text>
+  </file>
+  <!--${.::qbluetoothMgr.c}-->
+  <file name="qbluetoothMgr.c">
+   <text>#include &quot;qpc.h&quot;
+#include &quot;../common/ring.h&quot;
+#include &lt;unistd.h&gt;
+#include &lt;dirent.h&gt;
+#include &quot;../comm/comm.h&quot;
+#include &quot;assert.h&quot;
+#include &lt;sys/syscall.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &quot;bluetooth.h&quot;
+
+Q_DEFINE_THIS_FILE
+
+/// 模块名
+#define MODULE &quot;AO_BluetoothMgr&quot;
+
+#define COMM_REQ_MAX  3
+
+/* Active object class -----------------------------------------------------*/
+$declare ${AOs::BluetoothMgr}
+
+#define FREE      ((uint8_t)0)
+#define USED      ((uint8_t)1)
+
+#define BSP_TICKS_PER_SEC 100U
+
+#define OPEN_TOUT       (QTimeEvtCtr)(BSP_TICKS_PER_SEC * 1)
+#define TEST_TOUT       (QTimeEvtCtr)(BSP_TICKS_PER_SEC * 0.1)
+#define RESEND_TIME     (QTimeEvtCtr)(BSP_TICKS_PER_SEC * 3)
+#define ECHO_TOUT       (QTimeEvtCtr)(BSP_TICKS_PER_SEC * 3)
+
+#define COMMOPEN_TIMES        3
+#define ECHO_TIMES            3
+#define TEST_MAXLOOPS         100
+#define RESEND_MAXTIMES       3
+#define ACK_MAXTIMES          3
+#define RESEND_TIMES          3
+
+/* Local objects -----------------------------------------------------------*/
+static BluetoothMgr l_BluetoothMgr; /* the single instance of the Table active object */
+
+/* Global-scope objects ----------------------------------------------------*/
+QActive * const AO_BluetoothMgr = &amp;l_BluetoothMgr.super; /* &quot;opaque&quot; AO pointer */
+
+/*..........................................................................*/
+$define ${AOs::BluetoothMgr}
+$define ${AOs::BluetoothMgr_ctor}</text>
+  </file>
+  <!--${.::qbluetoothPoll.c}-->
+  <file name="qbluetoothPoll.c" codec="UTF-8">
+   <text>#include &quot;qtbox.h&quot;
+#include &quot;qpc.h&quot;
+#include &quot;bsp.h&quot;
+#include &quot;../common/ring.h&quot;
+#include &lt;sys/syscall.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &quot;type.h&quot;
+
+Q_DEFINE_THIS_FILE
+
+
+extern tRINGBUF *ptRing_Bluetooth;
+
+/* Active object class -----------------------------------------------------*/
+$declare(AOs::BluetoothPolling)
+
+#define POLL_TOUT    (QTimeEvtCtr)(BSP_TICKS_PER_SEC)
+#define PREPOLL_TOUT    (QTimeEvtCtr)(BSP_TICKS_PER_SEC * 1)
+#define REPOLL_TOUT  (QTimeEvtCtr)(BSP_TICKS_PER_SEC / 10)
+
+/* Local objects -----------------------------------------------------------*/
+static BluetoothPolling l_BluetoothPolling; /* the single instance of the Table active object */
+
+/* Global-scope objects ----------------------------------------------------*/
+QActive * const AO_BluetoothPolling = &amp;l_BluetoothPolling.super; /* &quot;opaque&quot; AO pointer */
+
+
+/*..........................................................................*/
+$define(AOs::BluetoothPolling_ctor)
+$define(AOs::BluetoothPolling)</text>
+  </file>
+  <!--${.::qbluetoothParsing.c}-->
+  <file name="qbluetoothParsing.c" codec="UTF-8">
+   <text>#include &quot;qtbox.h&quot;
+#include &quot;qpc.h&quot;
+#include &quot;bsp.h&quot;
+#include &quot;../common/ring.h&quot;
+#include &lt;sys/syscall.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;time.h&gt;
+#include &quot;type.h&quot;
+
+Q_DEFINE_THIS_FILE
+
+extern tRINGBUF *ptRing_Bluetooth;
+
+/* Active object class -----------------------------------------------------*/
+$declare(AOs::BluetoothParsing)
+
+
+/* Local objects -----------------------------------------------------------*/
+static BluetoothParsing l_BluetoothParsing; /* the single instance of the Table active object */
+
+/* Global-scope objects ----------------------------------------------------*/
+QActive * const AO_BluetoothParsing = &amp;l_BluetoothParsing.super; /* &quot;opaque&quot; AO pointer */
+
+
+/*..........................................................................*/
+$define(AOs::BluetoothParsing_ctor)
+$define(AOs::BluetoothParsing)</text>
   </file>
  </directory>
 </model>

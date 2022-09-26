@@ -128,6 +128,7 @@ C_SRCS += \
 	qf_time.c \
 	qf_port.c \
 	blinky.c \
+	qbluetoothMgr.c \
 	uart.c \
 	comm.c \
 	ring.c
